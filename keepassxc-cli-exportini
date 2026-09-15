@@ -1,39 +1,40 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import subprocess
 import sys
 import csv
 import os
+import io
 from getpass import getpass
 
 if len(sys.argv) != 2:
     print(f"usage: {sys.argv[0]} DATABASE_FILE")
     sys.exit(1)
 
-db = sys.argv[1]
-password = getpass()
+try: 
+    proc = subprocess.Popen(
+        ["keepassxc-cli", "export", "-f", "csv", sys.argv[1]],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
 
-proc = subprocess.run(["keepassxc-cli", "export", "-f", "csv", db], 
-                     input=password,
-                     text=True,
-                     capture_output=True)
-out = proc.stdout
-print(proc.stderr)
-if proc.returncode:
-    sys.exit(1)
+    stdout, _ = proc.communicate()
+    if proc.returncode:
+        sys.exit(proc.returncode)
 
-tmpfpath = "/tmp/xxx"
-with open(tmpfpath, "w", newline='') as tmpf:
-    tmpf.write(out)
-with open(tmpfpath, "r", newline='') as tmpf:
-    csv_reader = csv.DictReader(tmpf)
+    csv_reader = csv.DictReader(io.StringIO(stdout))
     for e in csv_reader:
         print(f"[{e["Title"]}]")
-        if e["Username"]: print(f"user={e["Username"]}")
-        if e["Password"]: print(f"pass={e["Password"]}")
-        if e["URL"]:      print(f"url={e["URL"]}")
-        if e["TOTP"]:     print(f"totp={e["TOTP"]}")
+        if e["Group"]:         print(f"group={e["Group"]}")
+        if e["Username"]:      print(f"user={e["Username"]}")
+        if e["Password"]:      print(f"pass={e["Password"]}")
+        if e["URL"]:           print(f"url={e["URL"]}")
+        if e["TOTP"]:          print(f"totp={e["TOTP"]}")
+        if e["Icon"]:          print(f"icon={e["Icon"]}")
+        if e["Last Modified"]: print(f"modified={e["Last Modified"]}")
+        if e["Created"]:       print(f"created={e["Created"]}")
         if e["Notes"]:
-            for line in e["Notes"].split(): print("# ")
+            for line in e["Notes"].splitlines(): print(f"# {line}")
         print()
-
-os.remove(tmpfpath)
+except KeyboardInterrupt:
+    print()
+    print("abandon")
