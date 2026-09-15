@@ -1,6 +1,13 @@
 # export keepassxc database as .ini file
 
-Usage:
+## usage
+
+```sh
+~$ ./keepassxc-cli-exportini ~/pw.kdbx >/tmp/X
+~$ scrypt enc /tmp/X ~/pw.e
+~$ shred -u /tmp/X
+```
+
 ```sh
 ~$ ./keepassxc-cli-exportini ~/pw.kdbx
 ...
